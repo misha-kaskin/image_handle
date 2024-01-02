@@ -70,7 +70,7 @@ public class Task1 {
 
         JButton loadButton = new JButton("Загрузить");
         loadButton.addActionListener((el) -> {
-            JFileChooser jFileChooser = new JFileChooser("src/main/java/task1/");
+            JFileChooser jFileChooser = new JFileChooser("src/main/resources/");
             jFileChooser.setDialogTitle("Выбор директории");
 
             jFileChooser.setFileFilter(new FileFilter() {

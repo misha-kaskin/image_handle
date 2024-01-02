@@ -76,7 +76,7 @@ public class Task2 {
         JPanel inPP = new JPanel();
         inPP.setLayout(new GridLayout(2, 2));
 
-        SpinnerNumberModel snmQuantum = new SpinnerNumberModel(8, 1, 8, 1);
+        SpinnerNumberModel snmQuantum = new SpinnerNumberModel(8, 0, 8, 1);
         JSpinner quantumSpinner = new JSpinner(snmQuantum);
         quantumSpinner.addChangeListener(e -> {
             int width = img.getWidth();
@@ -95,8 +95,7 @@ public class Task2 {
 
                     int rgb = (int) (0.3 * red + 0.59 * green + 0.11 * blue);
 
-                    int step = (int) pow(2, 9 - count);
-
+                    int step = (int) pow(2, 8 - count);
                     int tmpRgb = rgb / step;
                     rgb = (step * tmpRgb + step * (tmpRgb + 1)) / 2;
 
