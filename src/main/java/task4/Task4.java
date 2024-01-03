@@ -105,7 +105,12 @@ public class Task4 {
 
         //TODO
         JButton turnButton = new JButton("Автоповорот");
-
+        turnButton.addActionListener(el -> {
+            img1 = TurnImage.turnImage(img);
+            resultPanel.removeAll();
+            resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
+            resultPanel.updateUI();
+        });
 
         controlPanel.add(loadButton);
         controlPanel.add(selectPoint);
