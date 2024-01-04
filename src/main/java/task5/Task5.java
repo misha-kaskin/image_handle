@@ -8,8 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.Math.*;
 import static javax.imageio.ImageIO.read;
 
 public class Task5 {
@@ -19,6 +18,7 @@ public class Task5 {
     static int lowFilterNum = 1;
     static int gaussFilterNum = 3;
     static int medianFilterNum = 3;
+    static int embossType = 0;
 
     static double[][] lowFilterFirstType = {
             {1.0 / 9, 1.0 / 9, 1.0 / 9},
@@ -49,6 +49,28 @@ public class Task5 {
             {-2, 5, -2},
             {1, -2, 1}
     };
+
+    static double[][][] sobelFilters = {
+            {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}},
+            {{1, 2, 1}, {0, 0, 0}, {-1, -2, -1}}
+    };
+
+    static double[][][] kirschFilters = {
+            {{5, 5, 5}, {-3, 0, -3}, {-3, -3, -3}},
+            {{-3, 5, 5}, {-3, 0, 5}, {-3, -3, -3}},
+            {{-3, -3, 5}, {-3, 0, 5}, {-3, -3, 5}},
+            {{-3, -3, -3}, {-3, 0, 5}, {-3, 5, 5}},
+            {{-3, -3, -3}, {-3, 0, -3}, {5, 5, 5}},
+            {{-3, -3, -3}, {5, 0, -3}, {5, 5, -3}},
+            {{5, -3, -3}, {5, 0, -3}, {5, -3, -3}},
+            {{5, 5, -3}, {5, 0, -3}, {-3, -3, -3}}
+    };
+
+    static double[][][] embossFilters = {
+            {{0, 1, 0}, {-1, 0, 1}, {0, -1, 0}},
+            {{0, -1, 0}, {1, 0, -1}, {0, 1, 0}}
+    };
+
 
     public static void main(String[] args) {
         JFrame jFrame = new JFrame("Task5");
@@ -103,7 +125,7 @@ public class Task5 {
                 filter = highFilterThirdType;
             }
 
-            img1 = getFilteredImg(filter);
+            img1 = getFilteredImg(filter, e -> e);
 
             resultPanel.removeAll();
             resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
@@ -120,7 +142,7 @@ public class Task5 {
                 filter = lowFilterSecondType;
             }
 
-            img1 = getFilteredImg(filter);
+            img1 = getFilteredImg(filter, e -> e);
 
             resultPanel.removeAll();
             resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
@@ -147,7 +169,7 @@ public class Task5 {
                 }
             }
 
-            img1 = getFilteredImg(gaussMatrix);
+            img1 = getFilteredImg(gaussMatrix, e -> e);
 
             resultPanel.removeAll();
             resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
@@ -214,22 +236,134 @@ public class Task5 {
             resultPanel.updateUI();
         });
 
+        JButton sobelButton = new JButton("Собель");
+        sobelButton.addActionListener(el -> {
+            int len = sobelFilters.length;
+            BufferedImage[] bufferedImages = new BufferedImage[len];
+
+            for (int i = 0; i < len; i++) {
+                bufferedImages[i] = getFilteredImg(sobelFilters[i], Math::abs);
+            }
+
+            int width = img.getWidth();
+            int height = img.getHeight();
+            int type = img.getType();
+
+            BufferedImage img2 = new BufferedImage(width, height, type);
+
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    int resRed = 0;
+                    int resGreen = 0;
+                    int resBlue = 0;
+
+                    for (int k = 0; k < len; k++) {
+                        Color color = new Color(bufferedImages[k].getRGB(i, j));
+                        resRed += pow(color.getRed(), 2);
+                        resGreen += pow(color.getGreen(), 2);
+                        resBlue += pow(color.getBlue(), 2);
+                    }
+
+                    resRed = (int) max(0, min(255, sqrt(resRed)));
+                    resGreen = (int) max(0, min(255, sqrt(resGreen)));
+                    resBlue = (int) max(0, min(255, sqrt(resBlue)));
+
+                    Color resColor = new Color(resRed, resGreen, resBlue);
+                    img2.setRGB(i, j, resColor.getRGB());
+                }
+            }
+
+            img1 = img2;
+
+            resultPanel.removeAll();
+            resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
+            resultPanel.updateUI();
+        });
+
+        JButton kirschButton = new JButton("Кирш");
+        kirschButton.addActionListener(el -> {
+            int len = kirschFilters.length;
+            BufferedImage[] bufferedImages = new BufferedImage[len];
+
+            for (int i = 0; i < len; i++) {
+                bufferedImages[i] = getFilteredImg(kirschFilters[i], Math::abs);
+            }
+
+            int width = img.getWidth();
+            int height = img.getHeight();
+            int type = img.getType();
+
+            BufferedImage img2 = new BufferedImage(width, height, type);
+
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    int resRed = 0;
+                    int resGreen = 0;
+                    int resBlue = 0;
+
+                    for (int k = 0; k < len; k++) {
+                        Color color = new Color(bufferedImages[k].getRGB(i, j));
+
+                        if (color.getRed() > resRed) {
+                            resRed = abs(color.getRed());
+                        }
+
+                        if (color.getGreen() > resGreen) {
+                            resGreen = abs(color.getGreen());
+                        }
+
+                        if (color.getBlue() > resBlue) {
+                            resBlue = abs(color.getBlue());
+                        }
+                    }
+
+                    resRed = max(0, min(255, resRed));
+                    resGreen = max(0, min(255, resGreen));
+                    resBlue = max(0, min(255, resBlue));
+
+                    Color resColor = new Color(resRed, resGreen, resBlue);
+                    img2.setRGB(i, j, resColor.getRGB());
+                }
+            }
+
+            img1 = img2;
+
+            resultPanel.removeAll();
+            resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
+            resultPanel.updateUI();
+        });
+
+        JButton embossButton = new JButton("Тиснение");
+        embossButton.addActionListener(el -> {
+            double[][] filter = embossFilters[embossType];
+
+            img1 = getFilteredImg(filter, e -> abs(e + 128));
+
+            resultPanel.removeAll();
+            resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
+            resultPanel.updateUI();
+        });
+
         controlPanel.add(loadButton);
         controlPanel.add(srcImgButton);
         controlPanel.add(highFilterButton);
         controlPanel.add(lowFilterButton);
         controlPanel.add(gaussFilterButton);
         controlPanel.add(medianFilterButton);
+        controlPanel.add(sobelButton);
+        controlPanel.add(kirschButton);
+        controlPanel.add(embossButton);
 
         JPanel parameterPanel = new JPanel();
         parameterPanel.setBorder(new TitledBorder("Параметры"));
         JPanel inPP = new JPanel();
-        inPP.setLayout(new GridLayout(4, 2));
+        inPP.setLayout(new GridLayout(5, 2));
 
         SpinnerNumberModel snmHighFilter = new SpinnerNumberModel(1, 1, 3, 1);
         SpinnerNumberModel snmLowFilter = new SpinnerNumberModel(1, 1, 2, 1);
         SpinnerNumberModel snmGaussFilter = new SpinnerNumberModel(3, 3, Integer.MAX_VALUE, 2);
         SpinnerNumberModel snmMedianFilter = new SpinnerNumberModel(3, 3, Integer.MAX_VALUE, 2);
+        SpinnerNumberModel snmEmboss = new SpinnerNumberModel(0, 0, 1, 1);
 
         JSpinner highFilterSpinner = new JSpinner(snmHighFilter);
         highFilterSpinner.addChangeListener(el -> highFilterNum = (int) highFilterSpinner.getValue());
@@ -243,6 +377,9 @@ public class Task5 {
         JSpinner medianFilterSpinner = new JSpinner(snmMedianFilter);
         medianFilterSpinner.addChangeListener(el -> medianFilterNum = (int) medianFilterSpinner.getValue());
 
+        JSpinner embossSpinner = new JSpinner(snmEmboss);
+        embossSpinner.addChangeListener(el -> embossType = (int) embossSpinner.getValue());
+
         inPP.add(new JLabel("Тип высокочастотного"));
         inPP.add(highFilterSpinner);
         inPP.add(new JLabel("Тип низкочастного"));
@@ -251,6 +388,8 @@ public class Task5 {
         inPP.add(gaussFilterSpinner);
         inPP.add(new JLabel("Степень медианного"));
         inPP.add(medianFilterSpinner);
+        inPP.add(new JLabel("Тип тиснения"));
+        inPP.add(embossSpinner);
 
         parameterPanel.add(inPP);
 
@@ -262,7 +401,7 @@ public class Task5 {
         jFrame.setVisible(true);
     }
 
-    static BufferedImage getFilteredImg(double[][] filter) {
+    static BufferedImage getFilteredImg(double[][] filter, ColorHandler colorHandler) {
         int width = img.getWidth();
         int height = img.getHeight();
         int type = img.getType();
@@ -295,6 +434,10 @@ public class Task5 {
                     }
                 }
 
+                resRed = colorHandler.handle(resRed);
+                resGreen = colorHandler.handle(resGreen);
+                resBlue = colorHandler.handle(resBlue);
+
                 resRed = max(0, min(255, resRed));
                 resGreen = max(0, min(255, resGreen));
                 resBlue = max(0, min(255, resBlue));
@@ -323,5 +466,9 @@ public class Task5 {
         }
 
         return resVector;
+    }
+
+    interface ColorHandler {
+        int handle(int color);
     }
 }
