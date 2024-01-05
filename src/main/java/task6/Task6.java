@@ -22,6 +22,9 @@ public class Task6 {
     static Point c;
     static Point d;
 
+    static int sizeW = 0;
+    static int sizeH = 0;
+
     public static void main(String[] args) {
         JFrame jFrame = new JFrame("Task6");
         jFrame.setLayout(new BorderLayout());
@@ -64,6 +67,9 @@ public class Task6 {
 
             int height1 = jLabel.getHeight();
             int width1 = jLabel.getWidth();
+
+            sizeW = width1;
+            sizeH = height1;
 
             int height = imageIcon.getIconHeight();
             int width = imageIcon.getIconWidth();
@@ -257,6 +263,14 @@ public class Task6 {
                 }
             }
         }
+
+        int deltaX = (sizeW - width) / 2;
+        int deltaY = (sizeH - height) / 2;
+
+        a = new Point((int) tmpA.getX() + deltaX, (int) tmpA.getY() + deltaY);
+        b = new Point((int) tmpB.getX() + deltaX, (int) tmpB.getY() + deltaY);
+        c = new Point((int) tmpC.getX() + deltaX, (int) tmpC.getY() + deltaY);
+        d = new Point((int) tmpD.getX() + deltaX, (int) tmpD.getY() + deltaY);
 
         return img2;
     }
