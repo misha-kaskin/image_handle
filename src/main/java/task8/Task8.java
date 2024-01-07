@@ -186,7 +186,17 @@ public class Task8 {
     }
 
     static void drawLine(Point p1, Point p2, BufferedImage img2) {
-        img2.setRGB(p1.x, p1.y, Color.red.getRGB());
+        int dist = (int) (sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2)) * 10);
+        double deltaX = (p2.getX() - p1.getX()) / dist;
+        double deltaY = (p2.getY() - p1.getY()) / dist;
+        int startX = p1.x;
+        int startY = p1.y;
+
+        for (int i = 0; i < dist; i++) {
+            int x = (int) ceil(startX + deltaX * i);
+            int y = (int) ceil(startY + deltaY * i);
+            img2.setRGB(x, y, Color.red.getRGB());
+        }
     }
 
     static List<List<Point>> secondTypeApprox(List<List<Point>> localPointList) {
