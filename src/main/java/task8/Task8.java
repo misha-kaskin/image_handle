@@ -9,12 +9,14 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import static java.lang.Math.*;
 import static javax.imageio.ImageIO.read;
 
 public class Task8 {
     static BufferedImage img;
     static BufferedImage img1;
     static int accuracy = 5;
+    static List<List<Point>> globalPoints = new LinkedList<>();
 
     public static void main(String[] args) {
         JFrame jFrame = new JFrame("Task8");
@@ -55,14 +57,8 @@ public class Task8 {
             int height = img.getHeight();
             int type = img.getType();
 
-            BufferedImage img2 = new BufferedImage(width, height, type);
-            List<Point> pointList = new LinkedList<>();
-
-            for (int i = 0; i < width; i++) {
-                for (int j = 0; j < height; j++) {
-                    img2.setRGB(i, j, Color.WHITE.getRGB());
-                }
-            }
+            globalPoints.clear();
+            boolean[][] isBorders = new boolean[width][height];
 
             for (int j = 0; j < height; j++) {
                 for (int i = 0; i < width - 1; i++) {
@@ -73,9 +69,20 @@ public class Task8 {
                         continue;
                     }
 
+                    if (isBorders[i][j] || isBorders[i + 1][j]) {
+                        continue;
+                    }
+
+                    List<Point> pointList = new LinkedList<>();
+                    globalPoints.add(pointList);
+
                     Point l = new Point(i + 1, j);
                     Point r = new Point(i, j);
                     Point t = getTestPoint(l, r);
+
+                    isBorders[l.x][l.y] = true;
+                    isBorders[r.x][r.y] = true;
+                    isBorders[t.x][t.y] = true;
 
                     pointList.add(l);
 
@@ -88,15 +95,23 @@ public class Task8 {
                         }
 
                         t = getTestPoint(l, r);
+                        isBorders[t.x][t.y] = true;
                     }
-
-                    i = width - 1;
-                    j = height;
                 }
             }
 
-            for (Point p : pointList) {
-                img2.setRGB(p.x, p.y, Color.red.getRGB());
+            BufferedImage img2 = new BufferedImage(width, height, type);
+
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    img2.setRGB(i, j, Color.WHITE.getRGB());
+                }
+            }
+
+            for (List<Point> pointList : globalPoints) {
+                for (Point p : pointList) {
+                    img2.setRGB(p.x, p.y, Color.red.getRGB());
+                }
             }
 
             img1 = img2;
@@ -107,6 +122,31 @@ public class Task8 {
         });
 
         JButton approxButton = new JButton("Аппроксимация");
+        approxButton.addActionListener(el -> {
+            int width = img.getWidth();
+            int height = img.getHeight();
+            int type = img.getType();
+
+            List<List<Point>> localPoints = firstTypeApprox();
+            List<List<Point>> localPoints2 = secondTypeApprox(localPoints);
+
+            BufferedImage img2 = new BufferedImage(width, height, type);
+
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
+                    img2.setRGB(i, j, Color.WHITE.getRGB());
+                }
+            }
+
+            fillImg(img2, localPoints2);
+
+            img1 = img2;
+
+            resultPanel.removeAll();
+            resultPanel.add(new JLabel(new ImageIcon(img1)), BorderLayout.CENTER);
+            resultPanel.updateUI();
+        });
+
         JButton figureButton = new JButton("Тип фигуры");
 
         controlPanel.add(loadButton);
@@ -133,6 +173,112 @@ public class Task8 {
         jFrame.add(controlPanel, BorderLayout.SOUTH);
 
         jFrame.setVisible(true);
+    }
+
+    static void fillImg(BufferedImage img2, List<List<Point>> localPointList) {
+        for (List<Point> pl : localPointList) {
+            for (int i = 0; i < pl.size() - 1; i++) {
+                drawLine(pl.get(i), pl.get(i + 1), img2);
+            }
+
+            drawLine(pl.get(0), pl.get(pl.size() - 1), img2);
+        }
+    }
+
+    static void drawLine(Point p1, Point p2, BufferedImage img2) {
+        img2.setRGB(p1.x, p1.y, Color.red.getRGB());
+    }
+
+    static List<List<Point>> secondTypeApprox(List<List<Point>> localPointList) {
+        List<List<Point>> resList = new LinkedList<>();
+
+        for (List<Point> pl : localPointList) {
+            List<Integer> buffer = new LinkedList<>();
+            buffer.add(0);
+            buffer.add(pl.size() - 1);
+
+            List<Integer> tmp = secondType(pl, buffer, 0, pl.size());
+            tmp.sort(Integer::compare);
+            List<Point> tmpPoints = new LinkedList<>();
+
+            for (Integer idx : tmp) {
+                Point p = pl.get(idx);
+                tmpPoints.add(p);
+            }
+
+            resList.add(tmpPoints);
+        }
+
+        return resList;
+    }
+
+    static List<Integer> secondType(List<Point> pl, List<Integer> buffer, int l, int r) {
+        int maxIdx = findMaxDistPoint(pl, l, r);
+        buffer.add(maxIdx);
+
+        Point a = pl.get(l);
+        Point b = pl.get(r - 1);
+        Point maxPoint = pl.get(maxIdx);
+
+        if (getDistance(a, b, maxPoint) <= accuracy) {
+            return buffer;
+        }
+
+        secondType(pl, buffer, l, maxIdx + 1);
+        secondType(pl, buffer, maxIdx, r);
+
+        return buffer;
+    }
+
+    static double getDistance(Point a, Point b, Point maxPoint) {
+        double angle1 = atan2(b.x - a.x, b.y - a.y);
+        double angle2 = atan2(maxPoint.x - a.x, maxPoint.y - a.y);
+
+        if (angle1 < 0) {
+            angle1 += 2 * PI;
+        }
+        if (angle2 < 0) {
+            angle2 += 2 * PI;
+        }
+
+        double angle = abs(angle1 - angle2);
+        if (angle > PI) {
+            angle = 2 * PI - angle;
+        }
+        double distToA = sqrt(pow(a.x - maxPoint.x, 2) + pow(a.y - maxPoint.y, 2));
+
+        if (angle >= PI / 2) {
+            return distToA;
+        }
+        double distFromAToB = sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
+
+        if (cos(angle) * distToA > distFromAToB) {
+            return sqrt(pow(maxPoint.x - b.x, 2) + pow(maxPoint.y - b.y, 2));
+        }
+
+        return sin(angle) * distToA;
+    }
+
+    static int findMaxDistPoint(List<Point> pl, int l, int r) {
+        if (l == r) {
+            return 0;
+        }
+
+        int maxDistIdx = l;
+        Point a = pl.get(l);
+        Point b = pl.get(r - 1);
+        Point p1 = pl.get(maxDistIdx);
+
+        for (int i = l; i < r; i++) {
+            Point p = pl.get(i);
+
+            if (getDistance(a, b, p) > getDistance(a, b, p1)) {
+                maxDistIdx = i;
+                p1 = p;
+            }
+        }
+
+        return maxDistIdx;
     }
 
     static Point getTestPoint(Point l, Point r) {
@@ -180,5 +326,49 @@ public class Task8 {
         }
 
         return img2;
+    }
+
+    static boolean isOneLine(Point p1, Point p2, Point p3) {
+        int ax = p1.x - p2.x;
+        int ay = p1.y - p2.y;
+        int bx = p1.x - p3.x;
+        int by = p1.y - p3.y;
+
+        if (ax == 0 && bx == 0 || ay == 0 && by == 0) {
+            return true;
+        }
+
+        if (abs(ax) == abs(ay) && abs(bx) == abs(by)) {
+            return ax * bx > 0 && ay * by > 0;
+        }
+
+        return false;
+    }
+
+    static List<List<Point>> firstTypeApprox() {
+        List<List<Point>> localPoints = new LinkedList<>();
+
+        for (List<Point> lp : globalPoints) {
+            List<Point> localPointList = new LinkedList<>();
+
+            Point p1 = lp.get(0);
+            localPointList.add(p1);
+
+            for (int i = 0; i < lp.size() - 2; i++) {
+                Point p2 = lp.get(i + 1);
+                Point p3 = lp.get(i + 2);
+
+                if (!isOneLine(p1, p2, p3)) {
+                    localPointList.add(p2);
+                    p1 = p2;
+                }
+            }
+
+            localPointList.add(lp.get(lp.size() - 1));
+
+            localPoints.add(localPointList);
+        }
+
+        return localPoints;
     }
 }
