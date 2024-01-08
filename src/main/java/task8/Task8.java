@@ -57,48 +57,7 @@ public class Task8 {
             int height = img.getHeight();
             int type = img.getType();
 
-            globalPoints.clear();
-            boolean[][] isBorders = new boolean[width][height];
-
-            for (int j = 0; j < height; j++) {
-                for (int i = 0; i < width - 1; i++) {
-                    Color c1 = new Color(img.getRGB(i, j));
-                    Color c2 = new Color(img.getRGB(i + 1, j));
-
-                    if (isEqualColor(c1, c2)) {
-                        continue;
-                    }
-
-                    if (isBorders[i][j] || isBorders[i + 1][j]) {
-                        continue;
-                    }
-
-                    List<Point> pointList = new LinkedList<>();
-                    globalPoints.add(pointList);
-
-                    Point l = new Point(i + 1, j);
-                    Point r = new Point(i, j);
-                    Point t = getTestPoint(l, r);
-
-                    isBorders[l.x][l.y] = true;
-                    isBorders[r.x][r.y] = true;
-                    isBorders[t.x][t.y] = true;
-
-                    pointList.add(l);
-
-                    while (!t.equals(pointList.get(0))) {
-                        if (isBlack(t)) {
-                            l = t;
-                            pointList.add(t);
-                        } else {
-                            r = t;
-                        }
-
-                        t = getTestPoint(l, r);
-                        isBorders[t.x][t.y] = true;
-                    }
-                }
-            }
+            findBorder();
 
             BufferedImage img2 = new BufferedImage(width, height, type);
 
@@ -127,6 +86,7 @@ public class Task8 {
             int height = img.getHeight();
             int type = img.getType();
 
+            findBorder();
             List<List<Point>> localPoints = firstTypeApprox();
             List<List<Point>> localPoints2 = secondTypeApprox(localPoints);
 
@@ -148,6 +108,29 @@ public class Task8 {
         });
 
         JButton figureButton = new JButton("Тип фигуры");
+        figureButton.addActionListener(el -> {
+            boolean isCircle;
+            int prevAccuracy = accuracy;
+            accuracy = 4;
+
+            findBorder();
+            List<List<Point>> localPoints = firstTypeApprox();
+            List<List<Point>> localPoints2 = secondTypeApprox(localPoints);
+
+            accuracy = prevAccuracy;
+            isCircle = localPoints2.get(0).size() > 10;
+            String text;
+
+            if (isCircle) {
+                text = "Круг";
+            } else {
+                text = "Квадрат";
+            }
+
+            resultPanel.removeAll();
+            resultPanel.add(new JLabel(text), BorderLayout.CENTER);
+            resultPanel.updateUI();
+        });
 
         controlPanel.add(loadButton);
         controlPanel.add(borderButton);
@@ -173,6 +156,54 @@ public class Task8 {
         jFrame.add(controlPanel, BorderLayout.SOUTH);
 
         jFrame.setVisible(true);
+    }
+
+    static void findBorder() {
+        int width = img.getWidth();
+        int height = img.getHeight();
+
+        globalPoints.clear();
+        boolean[][] isBorders = new boolean[width][height];
+
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width - 1; i++) {
+                Color c1 = new Color(img.getRGB(i, j));
+                Color c2 = new Color(img.getRGB(i + 1, j));
+
+                if (isEqualColor(c1, c2)) {
+                    continue;
+                }
+
+                if (isBorders[i][j] || isBorders[i + 1][j]) {
+                    continue;
+                }
+
+                List<Point> pointList = new LinkedList<>();
+                globalPoints.add(pointList);
+
+                Point l = new Point(i + 1, j);
+                Point r = new Point(i, j);
+                Point t = getTestPoint(l, r);
+
+                isBorders[l.x][l.y] = true;
+                isBorders[r.x][r.y] = true;
+                isBorders[t.x][t.y] = true;
+
+                pointList.add(l);
+
+                while (!t.equals(pointList.get(0))) {
+                    if (isBlack(t)) {
+                        l = t;
+                        pointList.add(t);
+                    } else {
+                        r = t;
+                    }
+
+                    t = getTestPoint(l, r);
+                    isBorders[t.x][t.y] = true;
+                }
+            }
+        }
     }
 
     static void fillImg(BufferedImage img2, List<List<Point>> localPointList) {

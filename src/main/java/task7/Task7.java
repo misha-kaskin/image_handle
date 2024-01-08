@@ -126,13 +126,13 @@ public class Task7 {
                         continue;
                     }
 
-                    for (int k = 0; k < rMax; k++) {
-                        for (int l = 0; l < width; l++) {
+                    for (int k = 0; k < width; k++) {
+                        for (int l = 0; l < height; l++) {
                             int r = (int) ceil(sqrt(pow(i - k, 2) + pow(j - l, 2)));
 
                             if (k + r > width || l + r > height || l - r < 0 || k - r < 0) {
                                 continue;
-                            } else if (r < 0 || r > rMax) {
+                            } else if (r < 0 || r > rMax - 1) {
                                 continue;
                             }
 

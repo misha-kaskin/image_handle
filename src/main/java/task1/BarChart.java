@@ -33,8 +33,6 @@ public class BarChart extends JPanel {
 
         chart.setBackgroundPaint(new Color(232, 232, 232));
 
-        // Индивидуальная настройка каждого столбца
-        // Ширина столбца (в %) определяется значением от 0 до 1
         renderer.setSeriesBarWidth(0, 1.0);
         renderer.setSeriesBarWidth(1, 0.4);
 
@@ -45,7 +43,6 @@ public class BarChart extends JPanel {
         domainAxis.setUpperMargin(0.05);
         domainAxis.setLowerMargin(0.05);
 
-        // Размещение диаграммы на панели
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new java.awt.Dimension(840, 570));
 
